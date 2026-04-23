@@ -1,0 +1,35 @@
+#pragma once
+
+// --- VVS target ---
+// Set this to the platform-scoped Global ID of your bus stop.
+// Format: de:AAAAA:BBBB:P:S  (AAAAA = municipality, BBBB = stop,
+// P = platform, S = section). See README for how to find yours.
+#define VVS_URL "https://www3.vvs.de/mngvvs/XML_DM_REQUEST?outputFormat=rapidJSON&useRealtime=1&mode=direct&type_dm=stop&name_dm=de:08111:XXXX:0:1&limit=10"
+
+// --- hardware pins ---
+#define LED_DATA_PIN   17
+#define LED_COUNT      4
+
+// --- timing (ms) ---
+#define TICK_MS              1000
+#define FETCH_INTERVAL_MS   30 * 1000
+#define SHIFT_INTERVAL_MS  10 * 1000
+#define INVERT_INTERVAL_MS 60 * 60 * 1000
+
+// --- display / LED brightness ---
+#define OLED_CONTRAST      96    // 0-255; lower = longer life, but too low is unreadable
+#define LED_BRIGHTNESS      32
+
+// --- night window (local hours; off from NIGHT_START_HOUR until NIGHT_END_HOUR:NIGHT_END_MIN) ---
+#define NIGHT_WINDOW_ENABLED  0    // 0 = always on; 1 = respect the night window below
+#define NIGHT_START_HOUR   2
+#define NIGHT_END_HOUR     4
+#define NIGHT_END_MIN      30
+
+// --- NTP / timezone (Europe/Berlin with DST) ---
+#define TZ_STRING  "CET-1CEST,M3.5.0,M10.5.0/3"
+#define NTP_SERVER "pool.ntp.org"
+
+// --- timeouts ---
+#define WIFI_CONNECT_TIMEOUT_MS 15000
+#define HTTP_TIMEOUT_MS         20000
