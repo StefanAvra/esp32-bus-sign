@@ -14,17 +14,19 @@
 #define TICK_MS              1000
 #define FETCH_INTERVAL_MS   30 * 1000
 #define SHIFT_INTERVAL_MS  10 * 1000
-#define INVERT_INTERVAL_MS 60 * 60 * 1000
 
 // --- display / LED brightness ---
 #define OLED_CONTRAST      96    // 0-255; lower = longer life, but too low is unreadable
 #define LED_BRIGHTNESS      32
 
-// --- night window (local hours; off from NIGHT_START_HOUR until NIGHT_END_HOUR:NIGHT_END_MIN) ---
-#define NIGHT_WINDOW_ENABLED  0    // 0 = always on; 1 = respect the night window below
+// --- night window (local time; dim OLED + LEDs between START and END) ---
+#define NIGHT_WINDOW_ENABLED  0    // 0 = always daytime; 1 = respect the window below
 #define NIGHT_START_HOUR   2
+#define NIGHT_START_MIN    0
 #define NIGHT_END_HOUR     4
 #define NIGHT_END_MIN      30
+#define NIGHT_OLED_CONTRAST   0    // 0-255; 0 = turn OLED off entirely
+#define NIGHT_LED_BRIGHTNESS  0    // 0-255; 0 = LEDs dark
 
 // --- NTP / timezone (Europe/Berlin with DST) ---
 #define TZ_STRING  "CET-1CEST,M3.5.0,M10.5.0/3"

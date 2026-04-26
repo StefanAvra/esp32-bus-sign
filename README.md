@@ -21,8 +21,8 @@ ports easily.
   - `≥ 3 min` — green
   - Farther than the strip can show — **blue** on the last LED
   - When two buses map to the same LED, urgency wins (imminent > red > amber > green > blue)
-- **Burn-in mitigation.** Periodic pixel shift + hourly display invert.
-- **Optional night window.** Turns the OLED + LEDs off between configured hours.
+- **Burn-in mitigation.** Periodic pixel shift so static text doesn't etch into the OLED.
+- **Optional night window.** Dim OLED contrast and LED brightness between configured times (HH:MM start and end); set either brightness to `0` to turn that output fully off.
 - **Resilient WiFi.** Auto-reconnect with stall recovery (the ESP32 driver
   occasionally wedges after a `reason=34` drop — we force-reconnect).
 - **Frame-hash redraw.** OLED only updates when something actually changes.
@@ -57,7 +57,8 @@ constructor).
    - `VVS_URL` — insert your stop's platform Global ID (see next section)
    - `LED_COUNT`, `LED_DATA_PIN` — match your strip + wiring
    - `TZ_STRING` — your timezone (default is Europe/Berlin with DST)
-   - `NIGHT_WINDOW_ENABLED` + hours — optional "sleep" window
+   - `NIGHT_WINDOW_ENABLED` + `NIGHT_START_HOUR/MIN` + `NIGHT_END_HOUR/MIN` — optional "sleep" window; supports wrap-around (e.g. 23:30 → 06:00)
+   - `NIGHT_OLED_CONTRAST` + `NIGHT_LED_BRIGHTNESS` — 0–255; `0` turns that output fully off during the window
 4. **Flash**
    Select board "Heltec WiFi Kit 32(V2)" (or your ESP32 variant), upload,
    open serial monitor at 115200 baud to see WiFi/NTP/fetch progress.

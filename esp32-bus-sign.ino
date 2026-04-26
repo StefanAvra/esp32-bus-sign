@@ -39,11 +39,10 @@ struct State {
   int       count        = 0;
   int       failCount    = 0;
   uint8_t   shiftIdx     = 0;
-  bool      displayOn    = true;
+  bool      inNightMode  = false;
   unsigned long lastTickMs      = 0;
   unsigned long lastFetchMs     = 0;
   unsigned long lastShiftMs     = 0;
-  unsigned long lastInvertMs    = 0;
   unsigned long disconnectedMs  = 0;   // 0 while connected; else millis of first drop
 };
 
@@ -124,7 +123,6 @@ void setup() {
   state.lastTickMs    = millis();
   state.lastFetchMs   = millis();
   state.lastShiftMs   = millis();
-  state.lastInvertMs  = millis();
 }
 
 void loop() {
@@ -134,26 +132,31 @@ void loop() {
   if (now - state.lastTickMs >= TICK_MS) {
     state.lastTickMs = now;
 
-    if (isNightMode()) {
-      if (state.displayOn) {
-        display.displayOff();
-        FastLED.clear(true);
-        state.displayOn = false;
-      }
-    } else {
-      if (!state.displayOn) {
-        display.displayOn();
-        state.displayOn = true;
-        state.lastFetchMs = 0;   // force immediate refresh on wake
+    bool night = isNightMode();
+    if (night != state.inNightMode) {
+      state.inNightMode = night;
+      if (night) {
+        if (NIGHT_OLED_CONTRAST == 0) display.displayOff();
+        else                          display.setContrast(NIGHT_OLED_CONTRAST);
+        FastLED.setBrightness(NIGHT_LED_BRIGHTNESS);
+      } else {
+        if (NIGHT_OLED_CONTRAST == 0) display.displayOn();
+        display.setContrast(OLED_CONTRAST);
+        FastLED.setBrightness(LED_BRIGHTNESS);
+        state.lastFetchMs = 0;        // refresh right after waking
         lastFrameHash     = 0xFF;
       }
+    }
+
+    if (!(night && NIGHT_OLED_CONTRAST == 0)) {
       gNViews = buildLineViews(gViews, MAX_LINES);
       renderOled();
     }
   }
 
   // Every loop: LED presentation — keeps beatsin8() animating smoothly.
-  if (state.displayOn && !isNightMode()) {
+  // When dimmed, FastLED.setBrightness scales the output; at 0 the strip is dark.
+  if (!(state.inNightMode && NIGHT_OLED_CONTRAST == 0)) {
     renderLeds();
   }
 
@@ -193,8 +196,9 @@ void loop() {
     }
   }
 
-  // 30 s fetch (skipped while display is off)
-  if (state.displayOn
+  // 30 s fetch (skipped when OLED is fully off)
+  const bool oledFullyOff = state.inNightMode && NIGHT_OLED_CONTRAST == 0;
+  if (!oledFullyOff
       && WiFi.status() == WL_CONNECTED
       && (now - state.lastFetchMs >= FETCH_INTERVAL_MS || state.lastFetchMs == 0)) {
     state.lastFetchMs = now;
@@ -205,12 +209,6 @@ void loop() {
     state.lastShiftMs = now;
     state.shiftIdx    = (state.shiftIdx + 1) % 4;
     lastFrameHash     = 0xFF;
-  }
-
-  if (now - state.lastInvertMs >= INVERT_INTERVAL_MS) {
-    state.lastInvertMs = now;
-    display.invertDisplay();
-    lastFrameHash = 0xFF;
   }
 
   delay(20);
@@ -488,9 +486,12 @@ bool isNightMode() {
   if (now < 1700000000L) return false;
   struct tm lt;
   localtime_r(&now, &lt);
-  if (lt.tm_hour >= NIGHT_START_HOUR && lt.tm_hour < NIGHT_END_HOUR) return true;
-  if (lt.tm_hour == NIGHT_END_HOUR && lt.tm_min < NIGHT_END_MIN)    return true;
-  return false;
+  int nowMin   = lt.tm_hour * 60 + lt.tm_min;
+  int startMin = NIGHT_START_HOUR * 60 + NIGHT_START_MIN;
+  int endMin   = NIGHT_END_HOUR   * 60 + NIGHT_END_MIN;
+  if (startMin == endMin) return false;
+  if (startMin <  endMin) return nowMin >= startMin && nowMin < endMin;
+  return nowMin >= startMin || nowMin < endMin;   // wraps midnight
 }
 
 // ============================================================
